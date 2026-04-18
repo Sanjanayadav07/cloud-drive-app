@@ -90,26 +90,12 @@ exports.deleteFile = async (req, res) => {
       return res.status(404).json({ message: "File not found" });
     }
 
-    const fileName = file.storedName || file.filename;
-    const filePath = path.join(__dirname, "../uploads", fileName);
-
-    console.log("Deleting:", filePath);
-
-    // ✅ async delete (safe)
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.log("FS ERROR:", err.message);
-      }
-    });
-
-    // ✅ update folder size safely
     if (file.folderId) {
       await Folder.findByIdAndUpdate(file.folderId, {
         $inc: { totalSize: -file.size },
       });
     }
 
-    // ✅ delete from DB
     await File.findByIdAndDelete(fileId);
 
     res.json({ message: "File deleted successfully" });
