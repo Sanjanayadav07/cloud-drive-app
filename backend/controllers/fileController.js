@@ -29,7 +29,8 @@ exports.uploadFile = async (req, res) => {
       storedName: file.originalname,
 
       // ✅ fake but usable structure
-      url: `/uploads/${file.originalname}`,
+      //url: `/uploads/${file.originalname}`,
+      url: `${process.env.BASE_URL}/uploads/${file.originalname}`,
 
       size: file.size,
       type: file.mimetype,
