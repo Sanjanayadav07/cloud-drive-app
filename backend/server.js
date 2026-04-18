@@ -9,10 +9,10 @@ const path = require("path");
 dotenv.config();
 
 const app = express();
-
 const allowedOrigins = [
-  "http://localhost:5000",
-  "https://cloud-drive-app-smoky.vercel.app"
+  "http://localhost:3000",
+  "https://cloud-drive-app-smoky.vercel.app",
+  "https://cloud-drive-app-bc4b.vercel.app"
 ];
 
 app.use(cors({
