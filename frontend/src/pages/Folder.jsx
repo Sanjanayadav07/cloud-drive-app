@@ -120,7 +120,7 @@ function Folder() {
       case "image":
         return (
           <img
-            src={file.url || "/placeholder.png"}
+            src={file.url || "/file-icon.png"}
             alt={file.filename}
             onClick={() => file.url && setSelectedImage(file.url)}
             className="w-full h-40 object-cover rounded-lg cursor-pointer"

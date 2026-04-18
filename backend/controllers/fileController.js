@@ -26,8 +26,11 @@ exports.uploadFile = async (req, res) => {
 
     const newFile = await File.create({
       filename: file.originalname,
-      storedName: file.originalname, // ✅ no filename in memoryStorage
-      url: "N/A", // ❗ no local file URL in Vercel
+      storedName: file.originalname,
+
+      // ✅ fake but usable structure
+      url: `/uploads/${file.originalname}`,
+
       size: file.size,
       type: file.mimetype,
       folderId,
