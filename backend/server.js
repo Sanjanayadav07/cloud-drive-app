@@ -6,43 +6,36 @@ const authRoutes = require("./routes/authRoutes");
 const folderRoutes = require("./routes/folderRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const path = require("path");
+
 dotenv.config();
 
 const app = express();
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://cloud-drive-app-smoky.vercel.app",
-  "https://cloud-drive-app-bc4b.vercel.app"
-];
 
+// ✅ CORS (this is enough)
 app.use(cors({
-  origin: function (origin, callback) {
-    // allow REST tools like Postman (no origin)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      console.log("Blocked CORS origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: [
+    "http://localhost:5173",
+    "https://cloud-drive-app-smoky.vercel.app"
+  ],
   credentials: true
 }));
+
 app.use(express.json());
 
+// routes
 app.use("/api/auth", authRoutes);
 app.use("/api/folder", folderRoutes);
 app.use("/api/file", fileRoutes);
-//app.use("/uploads", express.static("uploads"));
 
+// static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// DB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
-
+// test route
 app.get("/", (req, res) => {
   res.send("Cloud Drive API Running");
 });

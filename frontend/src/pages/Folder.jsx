@@ -31,7 +31,11 @@ function Folder() {
 
   useEffect(() => {
     fetchFiles();
-  }, []);
+    if (!id) {
+      console.error("Folder ID missing in route");
+      return;
+    }
+  }, [id]);
 
   // 📤 Upload
   const uploadFile = async (e) => {

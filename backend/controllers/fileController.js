@@ -11,16 +11,15 @@ const path = require("path");
 exports.uploadFile = async (req, res) => {
   try {
     const file = req.file;
-    const { folderId } = req.body;
+    const folderId = req.body.folderId;
 
-    if (!file) {
-      return res.status(400).json({ message: "No file uploaded" });
+    if (!folderId) {
+      return res.status(400).json({ message: "folderId missing" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(folderId)) {
       return res.status(400).json({ message: "Invalid folder ID" });
     }
-
     const newFile = await File.create({
       filename: file.originalname,
       storedName: file.filename,
