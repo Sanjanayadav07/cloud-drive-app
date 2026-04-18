@@ -10,8 +10,23 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5000",
+  "https://cloud-drive-app-smoky.vercel.app"
+];
+
 app.use(cors({
-  origin: "https://cloud-drive-app-smoky.vercel.app",
+  origin: function (origin, callback) {
+    // allow REST tools like Postman (no origin)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      console.log("Blocked CORS origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
