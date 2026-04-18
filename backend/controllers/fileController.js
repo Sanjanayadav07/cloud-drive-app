@@ -1,8 +1,7 @@
 const File = require("../models/File");
 const Folder = require("../models/Folder");
 const mongoose = require("mongoose");
-const fs = require("fs");
-const path = require("path");
+
 
 
 // =======================
@@ -13,6 +12,10 @@ exports.uploadFile = async (req, res) => {
     const file = req.file;
     const folderId = req.body.folderId;
 
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
     if (!folderId) {
       return res.status(400).json({ message: "folderId missing" });
     }
@@ -20,17 +23,17 @@ exports.uploadFile = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(folderId)) {
       return res.status(400).json({ message: "Invalid folder ID" });
     }
+
     const newFile = await File.create({
       filename: file.originalname,
-      storedName: file.filename,
-      url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+      storedName: file.originalname, // ✅ no filename in memoryStorage
+      url: "N/A", // ❗ no local file URL in Vercel
       size: file.size,
       type: file.mimetype,
       folderId,
       userId: req.user.userId,
     });
 
-    // ✅ safe folder update
     await Folder.findByIdAndUpdate(folderId, {
       $inc: { totalSize: file.size },
     });
@@ -42,19 +45,9 @@ exports.uploadFile = async (req, res) => {
 
   } catch (error) {
     console.error("UPLOAD ERROR:", error);
-
-    // ❗ cleanup if DB fail but file uploaded
-    if (req.file) {
-      const filePath = path.join(__dirname, "../uploads", req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-
     res.status(500).json({ message: "Upload failed" });
   }
 };
-
 
 // =======================
 // 📂 GET FILES

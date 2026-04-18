@@ -11,16 +11,14 @@ function Folder() {
 
   const token = localStorage.getItem("token");
 
-  // 🔍 Filter (safe)
   const filteredFiles = files.filter((file) =>
     (file.filename || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // 📂 Fetch
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`/file/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }, // ✅ FIX
+        headers: { Authorization: `Bearer ${token}` },
       });
       setFiles(res.data);
     } catch (err) {
@@ -30,11 +28,8 @@ function Folder() {
   };
 
   useEffect(() => {
+    if (!id) return;
     fetchFiles();
-    if (!id) {
-      console.error("Folder ID missing in route");
-      return;
-    }
   }, [id]);
 
   // 📤 Upload
@@ -44,11 +39,10 @@ function Folder() {
 
     const tempId = Date.now();
 
-    // ✅ instant preview
     const tempFile = {
       _id: tempId,
       filename: file.name,
-      url: URL.createObjectURL(file),
+      url: URL.createObjectURL(file), // ✅ preview
     };
 
     setFiles((prev) => [tempFile, ...prev]);
@@ -66,47 +60,46 @@ function Folder() {
 
       const realFile = res.data.file;
 
-      // ✅ replace temp with real file
+      // ✅ KEEP preview even after upload
       setFiles((prev) =>
-        prev.map((f) => (f._id === tempId ? realFile : f))
+        prev.map((f) =>
+          f._id === tempId
+            ? { ...realFile, url: f.url }
+            : f
+        )
       );
 
     } catch (err) {
       console.error("UPLOAD ERROR:", err.response?.data || err.message);
       alert("Upload failed");
 
-      // ❗ remove temp on fail
       setFiles((prev) => prev.filter((f) => f._id !== tempId));
     }
 
-    // ✅ reset input
     e.target.value = null;
   };
 
-
-  // 🗑️ Delete (optimistic + rollback)
+  // 🗑️ Delete
   const deleteFile = async (fileId) => {
     if (!window.confirm("Delete this file?")) return;
 
-    const oldFiles = [...files]; // ✅ backup
+    const oldFiles = [...files];
 
     try {
       setFiles((prev) => prev.filter((file) => file._id !== fileId));
 
       await axios.delete(`/file/delete/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` }, // ✅ FIX
+        headers: { Authorization: `Bearer ${token}` },
       });
 
     } catch (err) {
       console.error(err);
       alert("Delete failed");
-
-      // ❗ rollback
       setFiles(oldFiles);
     }
   };
 
-  // 🧠 File type detect
+  // 🧠 File type
   const getFileType = (filename = "") => {
     const ext = filename.split(".").pop().toLowerCase();
 
@@ -127,52 +120,37 @@ function Folder() {
       case "image":
         return (
           <img
-            src={file.url}
+            src={file.url || "/placeholder.png"}
             alt={file.filename}
-            onClick={() => setSelectedImage(file.url)}
-            className="w-full h-40 object-cover rounded-lg cursor-pointer hover:scale-105 transition"
+            onClick={() => file.url && setSelectedImage(file.url)}
+            className="w-full h-40 object-cover rounded-lg cursor-pointer"
           />
         );
 
       case "video":
-        return (
-          <video
-            src={file.url}
-            controls
-            className="w-full h-40 rounded-lg"
-          />
+        return file.url ? (
+          <video src={file.url} controls className="w-full h-40 rounded-lg" />
+        ) : (
+          <div className="h-40 flex items-center justify-center bg-gray-200 rounded-lg">
+            🎥 Video
+          </div>
         );
 
       case "pdf":
-        return (
-          <div
-            onClick={() => window.open(file.url)}
-            className="h-40 flex flex-col items-center justify-center bg-red-100 rounded-lg cursor-pointer"
-          >
-            📄 PDF
-            <p className="text-xs">Open</p>
-          </div>
-        );
-
       case "doc":
-        return (
-          <div
-            onClick={() => window.open(file.url)}
-            className="h-40 flex flex-col items-center justify-center bg-blue-100 rounded-lg cursor-pointer"
-          >
-            📝 DOC
-            <p className="text-xs">Open</p>
-          </div>
-        );
-
       case "zip":
         return (
           <div
-            onClick={() => window.open(file.url)}
-            className="h-40 flex flex-col items-center justify-center bg-yellow-100 rounded-lg cursor-pointer"
+            onClick={() => {
+              if (file.url) window.open(file.url);
+              else alert("Preview not available");
+            }}
+            className="h-40 flex flex-col items-center justify-center bg-gray-200 rounded-lg cursor-pointer"
           >
-            🗂️ ZIP
-            <p className="text-xs">Download</p>
+            📄 File
+            <p className="text-xs">
+              {file.url ? "Open" : "Not available"}
+            </p>
           </div>
         );
 
@@ -200,12 +178,10 @@ function Folder() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* Empty */}
       {filteredFiles.length === 0 && (
         <p className="text-gray-500 mt-6">No files found</p>
       )}
 
-      {/* Grid */}
       {filteredFiles.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
           {filteredFiles.map((file) => (
@@ -225,8 +201,13 @@ function Folder() {
               <p className="text-sm mt-2 truncate">{file.filename}</p>
 
               <a
-                href={file.url}
-                download
+                href={file.url || "#"}
+                onClick={(e) => {
+                  if (!file.url) {
+                    e.preventDefault();
+                    alert("Download not available");
+                  }
+                }}
                 className="text-blue-500 text-xs block mt-1"
               >
                 Download

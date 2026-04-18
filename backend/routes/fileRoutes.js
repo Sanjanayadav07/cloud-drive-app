@@ -16,5 +16,5 @@ router.post(
 
 // get files of folder
 router.get("/:folderId", authMiddleware, getFiles);
-router.delete("/delete/:id", deleteFile);
+router.delete("/delete/:id", authMiddleware, deleteFile);
 module.exports = router;
